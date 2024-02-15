@@ -1,3 +1,5 @@
+#define CHECK "../check.csv"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -13,49 +15,42 @@
 
 int menu();
 void gather_name(char* name, char* surname);
-int print_mentees(FILE* pairs_db, FILE* mentee_db, int index);
-int print_mentors(FILE* pairs_db, FILE* mentor_db, int index);
-int search_mentor(FILE* mentor_db, char* name, char* surname, int* found);
-int search_mentee(FILE* mentee_db, char* name, char* surname, int* found);
+void print_mentees(FILE* pairs_db, FILE* mentee_db, int index);
+void print_mentors(FILE* pairs_db, FILE* mentor_db, int index);
+void print_check(FILE* mentor_db, FILE* mentee_db, FILE* pairs_db);
+int search_db(FILE* db, char* name, char* surname, int* found);
+int exists_pair(FILE* db, int mentee_id, int mentor_id);
+void find_ee_of_or(FILE* mentor_db, FILE* mentee_db, FILE* pairs_db);
+void find_or_of_ee(FILE* mentor_db, FILE* mentee_db, FILE* pairs_db);
 
 int main(){
-	FILE *mentor_db, *mentee_db, *pairs_db;
+	// decl
+	FILE *mentor_db, *mentee_db, *pairs_db, *check;
 	int choice, index, found;
 	char name[NAME_FIELDS],surname[NAME_FIELDS];
 
+	// init
 	mentor_db = fopen(MENTOR_DB,"a+");
 	mentee_db = fopen(MENTEE_DB,"a+");
 	pairs_db = fopen(PAIRS_DB,"a+");
 
-	choice=menu();
-	switch(choice){
-		case 1:{
-			printf("\nYou want to find the mentees of a mentor.\n\n");
-			gather_name(name,surname);
-			index = search_mentor(mentor_db,name,surname,&found);
-			if(!found)
-				printf("This mentor does not seem to exist.");
-			else
-				print_mentees(pairs_db,mentee_db,index);
+	while((choice=menu()) != 0){
+		switch(choice){
+			case 1:
+				find_ee_of_or(mentor_db,mentee_db,pairs_db);
+				break;		
+			case 2:
+				find_or_of_ee(mentor_db,mentee_db,pairs_db);
+				break;
+			case 3:
+				print_check(mentor_db,mentee_db,pairs_db);
+				break;
+			default:
+				printf("bad choice. you may only insert '1','2', or '3'.");
 		}
-		break;		
-		case 2:{
-			printf("\nYou want to find the mentors of a mentee.\n\n");
-			gather_name(name,surname);
-			index = search_mentee(mentee_db,name,surname,&found);
-			if(!found)
-				printf("This mentee does not seem to exist.");
-			else
-				print_mentors(pairs_db,mentor_db,index);
-		}
-		break;
-		case 3:{
-			// for another day.
-		}
-		default:
-			printf("bad choice. you may only insert '1','2', or '3'.");
 	}
 
+	// tidy up
 	fclose(mentor_db);
 	fclose(mentee_db);
 	fclose(pairs_db);
@@ -63,9 +58,66 @@ int main(){
 	return 0;
 }
 
+int exists_pair(FILE* db, int mentee_id, int mentor_id){
+	char ist[IST_LEN];
+	rewind(db);
+	while(fgets(ist,IST_LEN,db) != NULL){
+		if(mentor_id == atoi(strtok(ist,SEP)) && mentee_id == atoi(strtok(NULL,SEP)))
+			return 1;
+	}
+	return 0;
+}
+int search_db(FILE* db, char* name, char* surname, int* found){
+	char ins[IST_LEN], id[ID_LEN];
+	int i, ni, si, temp, unique;
+
+	unique = 0;
+	rewind(db);
+	while(fgets(ins, IST_LEN, db) != NULL ){
+		i = 0;
+		*found = 1;
+		// copio id
+		while(ins[i] != ','){
+			id[i]=ins[i];
+			i++;
+		}
+		id[i]='\0';
+		// check sul nome, in caso passo al next row
+		i++;
+		ni = 0;
+		while(*found && ins[i] != ',' && name[ni] != '\0'){
+			if(ins[i]!=name[ni]){
+				*found = 0;
+			}
+			i++;
+			ni++;
+		}
+		// finisco entry per differenze date da secondi nomi
+		while(ins[i] != ','){
+			i++;
+		}
+		// check sul cognome, in caso passo al next row
+		i++;
+		si = 0;
+		while(*found && ins[i] != '\n' && surname[si] != '\0'){
+			if(ins[i]!=surname[si]){
+				*found = 0;
+			}
+			i++;
+			si++;
+		}
+
+		temp = atoi(id);
+		if(*found) 
+			return temp;
+		else if (unique < temp)
+			unique = temp;
+	}
+	return unique + 1;
+}
 int menu(){
 	int choice;
-	printf("Hello. There are 3 ways of accessing the data. You can\n1. Ask me about a specific mentor, and I will display their mentees\n2. Ask me about a specific mentee, and I will display their mentor\n3. Provide me a file and I will tell you whether any repetition with the past editions arises.\nIn case any of this is of interest, digit the associated number and press enter...");
+	printf("Hello. There are 3 ways of accessing the data. You can\n1. Ask me about a specific mentor, and I will display their mentees\n2. Ask me about a specific mentee, and I will display their mentor\n3. Provide me a file and I will tell you whether any repetition with the past editions arises.\n0. Terminate program\n\nDigit the associated number and press enter to select...");
 	scanf("%d",&choice);
 	return choice;
 }
@@ -75,7 +127,7 @@ void gather_name(char* name, char* surname){
 	printf("\nAnd now the surname..."); 
 	scanf("%s",surname);	
 }
-int print_mentees(FILE* pairs_db, FILE* mentee_db, int index){
+void print_mentees(FILE* pairs_db, FILE* mentee_db, int index){
 	int found, pair, year, exit;
 	char ins[IST_LEN], compare[IST_LEN];
 
@@ -101,10 +153,8 @@ int print_mentees(FILE* pairs_db, FILE* mentee_db, int index){
 		}
 		// continuo la ricerca con prossimo pairing.
 	}
-	printf(">>----=0=----<<");
-	return 0;
 }
-int print_mentors(FILE* pairs_db, FILE* mentor_db, int index){
+void print_mentors(FILE* pairs_db, FILE* mentor_db, int index){
 	int found, pair, year, exit;
 	char ins[IST_LEN], compare[IST_LEN];
 
@@ -130,102 +180,66 @@ int print_mentors(FILE* pairs_db, FILE* mentor_db, int index){
 		}
 		// continuo la ricerca con prossimo pairing.
 	}
-	printf(">>----=0=----<<");
-	return 0;
 }
-int search_mentor(FILE* mentor_db, char* name, char* surname, int* found){
-	char ins[IST_LEN], id[ID_LEN];
-	int i, ni, si, temp, unique;
+void find_ee_of_or(FILE* mentor_db, FILE* mentee_db, FILE* pairs_db){
+	int index, found;
+	char name[NAME_FIELDS],surname[NAME_FIELDS];
 
-	unique = 0;
-	rewind(mentor_db);
-	while(fgets(ins, IST_LEN, mentor_db) != NULL ){
-		i = 0;
-		*found = 1;
-		// copio id
-		while(ins[i] != ','){
-			id[i]=ins[i];
-			i++;
-		}
-		id[i]='\0';
-		// check sul nome, in caso passo al next row
-		i++;
-		ni = 0;
-		while(*found && ins[i] != ',' && name[ni] != '\0'){
-			if(ins[i]!=name[ni]){
-				*found = 0;
-			}
-			i++;
-			ni++;
-		}
-		// finisco entry per differenze date da secondi nomi
-		while(ins[i] != ','){
-			i++;
-		}
-		// check sul cognome, in caso passo al next row
-		i++;
-		si = 0;
-		while(*found && ins[i] != '\n' && surname[si] != '\0'){
-			if(ins[i]!=surname[si]){
-				*found = 0;
-			}
-			i++;
-			si++;
-		}
+	printf("\nYou want to find the mentees of a mentor.\n\n");
+	gather_name(name,surname);
+	index = search_db(mentor_db,name,surname,&found);
+	printf("\n---\n");
+	if(!found)
+		printf("This mentor does not seem to exist.");
+	else{
 
-		temp = atoi(id);
-		if(*found) 
-			return temp;
-		else if (unique < temp)
-			unique = temp;
+		printf("Mentor N.%4d: %s %s. These are their mentees:\n",index,name,surname);
+		print_mentees(pairs_db,mentee_db,index);
 	}
-	return unique + 1;
+	printf("---\n\n");
 }
-int search_mentee(FILE* mentee_db, char* name, char* surname, int* found){
-	char ins[IST_LEN], id[ID_LEN];
-	int i, ni, si, temp, unique;
+void find_or_of_ee(FILE* mentor_db, FILE* mentee_db, FILE* pairs_db){
+	int index, found;
+	char name[NAME_FIELDS],surname[NAME_FIELDS];
 
-	unique = 0;
-	rewind(mentee_db);
-	while(fgets(ins, IST_LEN, mentee_db) != NULL ){
-		i = 0;
-		*found = 1;
-		// copio id
-		while(ins[i] != ','){
-			id[i]=ins[i];
-			i++;
-		}
-		id[i]='\0';
-		// check sul nome, in caso passo al next row
-		i++;
-		ni = 0;
-		while(*found && ins[i] != ',' && name[ni] != '\0'){
-			if(ins[i]!=name[ni]){
-				*found = 0;
-			}
-			i++;
-			ni++;
-		}
-		// finisco entry per differenze date da secondi nomi
-		while(ins[i] != ','){
-			i++;
-		}
-		// check sul cognome, in caso passo al next row
-		i++;
-		si = 0;
-		while(*found && ins[i] != '\n' && surname[si] != '\0'){
-			if(ins[i]!=surname[si]){
-				*found = 0;
-			}
-			i++;
-			si++;
-		}
-
-		temp = atoi(id);
-		if(*found) 
-			return temp;
-		else if (unique < temp)
-			unique = temp;
+	printf("\nYou want to find the mentors of a mentee.\n\n");
+	gather_name(name,surname);
+	index = search_db(mentee_db,name,surname,&found);
+	printf("\n---\n");
+	if(!found)
+		printf("This mentee does not seem to exist.");
+	else{
+		printf("Mentee N.%4d: %s %s. These are their mentors:\n",index,name,surname);
+		print_mentors(pairs_db,mentor_db,index);
 	}
-	return unique + 1;
+	printf("---\n\n");
+}
+void print_check(FILE* mentor_db, FILE* mentee_db, FILE* pairs_db){
+	FILE *check;
+	char ist[IST_LEN];
+	char mentor_nm[NAME_FIELDS], mentor_snm[NAME_FIELDS], mentee_nm[NAME_FIELDS], mentee_snm[NAME_FIELDS];
+	int mentee_id, mentor_id, found;
+
+	check = fopen(CHECK,"r");
+	printf("\n---\n");
+	while(fgets(ist,IST_LEN,check) != NULL){
+		// dopo aver letto la riga, popola i parametri di lavoro
+		strcpy(mentor_nm, strtok(ist,SEP));
+		strcpy(mentor_snm, strtok(NULL,SEP));
+		strcpy(mentee_nm, strtok(NULL,SEP));
+		strcpy(mentee_snm, strtok(NULL,SEP));
+
+		// controlla che entrambi, mentee e mentor, siano già presenti. Altrimenti almeno uno dei due è nuovo e puoi passare al prossimo controllo
+		mentee_id=search_db(mentee_db,mentee_nm,mentee_snm,&found);
+		if(!found) continue;
+		mentor_id=search_db(mentor_db,mentor_nm,mentor_snm,&found);
+		if(!found) continue;
+
+		// se esiste già stessa coppia, stampa messaggio di avviso e continua.
+		if(exists_pair(pairs_db,mentee_id,mentor_id)){
+			printf("ACHTUNG: SAME PAST PAIR FOUND!\n mentee: %s %s, mentor: %s %s\n",mentee_nm,mentee_snm,mentor_nm,mentor_snm);
+		}	
+	}
+	fclose(check);
+	printf("\n---\n");
 }
