@@ -15,7 +15,7 @@
 #define MENTEE_DB "../databases/mentee_db.csv"
 #define MENTOR_DB "../databases/mentor_db.csv"
 #define PAIRS_DB "../databases/pairs_db.csv"
-#define SEP ","
+#define SEP ",\n"
 
 int check_format();
 int search_db(FILE* db, char* name, char* surname, int* found);
