@@ -1,46 +1,46 @@
-#define CHECK "../check.csv"
+#define CHECK_DB_FN "../check_db.csv"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #define FNAME_LEN 30
-#define IST_LEN 410
-#define ID_LEN 10
-#define NAME_FIELDS 100
-#define MENTEE_DB "../databases/mentee_db.csv"
-#define MENTOR_DB "../databases/mentor_db.csv"
-#define PAIRS_DB "../databases/pairs_db.csv"
+#define INSTANCE_LEN 410
+#define KEY_LEN 10
+#define FIELDS_LEN 100
+#define MENTEE_DB_FN "../databases/mentee_db.csv"
+#define MENTOR_DB_FN "../databases/mentor_db.csv"
+#define PAIRS_DB_FN "../databases/pairs_db.csv"
 #define SEP ",\n"
 
 int menu();
-void gather_name(char* name, char* surname);
+void request_anagraphic(char* name, char* surname);
 void print_mentees(FILE* pairs_db, FILE* mentee_db, int index);
 void print_mentors(FILE* pairs_db, FILE* mentor_db, int index);
 void print_check(FILE* mentor_db, FILE* mentee_db, FILE* pairs_db);
-int search_db(FILE* db, char* name, char* surname, int* found);
-int exists_pair(FILE* db, int mentee_id, int mentor_id);
-void find_ee_of_or(FILE* mentor_db, FILE* mentee_db, FILE* pairs_db);
-void find_or_of_ee(FILE* mentor_db, FILE* mentee_db, FILE* pairs_db);
+int search_db_from_data(FILE* database, char* name, char* surname, int* is_in_database);
+int exists_pair(FILE* database, int mentee_key, int mentor_key);
+void find_mentees_of_mentor(FILE* mentor_db, FILE* mentee_db, FILE* pairs_db);
+void find_mentors_of_mentee(FILE* mentor_db, FILE* mentee_db, FILE* pairs_db);
 
 int main(){
 	// decl
-	FILE *mentor_db, *mentee_db, *pairs_db, *check;
-	int choice, index, found;
-	char name[NAME_FIELDS],surname[NAME_FIELDS];
+	FILE *mentor_db, *mentee_db, *pairs_db;
+	int choice, index;
+	char name[FIELDS_LEN],surname[FIELDS_LEN];
 
 	// init
-	mentor_db = fopen(MENTOR_DB,"a+");
-	mentee_db = fopen(MENTEE_DB,"a+");
-	pairs_db = fopen(PAIRS_DB,"a+");
+	mentor_db = fopen(MENTOR_DB_FN,"a+");
+	mentee_db = fopen(MENTEE_DB_FN,"a+");
+	pairs_db = fopen(PAIRS_DB_FN,"a+");
 
 	while((choice=menu()) != 0){
 		switch(choice){
 			case 1:
-				find_ee_of_or(mentor_db,mentee_db,pairs_db);
+				find_mentees_of_mentor(mentor_db,mentee_db,pairs_db);
 				break;		
 			case 2:
-				find_or_of_ee(mentor_db,mentee_db,pairs_db);
+				find_mentors_of_mentee(mentor_db,mentee_db,pairs_db);
 				break;
 			case 3:
 				print_check(mentor_db,mentee_db,pairs_db);
@@ -58,188 +58,219 @@ int main(){
 	return 0;
 }
 
-int exists_pair(FILE* db, int mentee_id, int mentor_id){
-	char ist[IST_LEN];
-	rewind(db);
-	while(fgets(ist,IST_LEN,db) != NULL){
-		if(mentor_id == atoi(strtok(ist,SEP)) && mentee_id == atoi(strtok(NULL,SEP)))
+int exists_pair(FILE* database, int mentee_key, int mentor_key){
+	char instance[INSTANCE_LEN];
+
+	rewind(database);
+	while(fgets(instance, INSTANCE_LEN, database)){		
+		if(mentor_key == atoi(strtok(instance, SEP)) 
+		&& mentee_key == atoi(strtok(NULL, SEP)))
 			return 1;
 	}
 	return 0;
 }
-int search_db(FILE* db, char* name, char* surname, int* found){
-	char ins[IST_LEN], id[ID_LEN];
-	int i, ni, si, temp, unique;
 
-	unique = 0;
-	rewind(db);
-	while(fgets(ins, IST_LEN, db) != NULL ){
-		i = 0;
-		*found = 1;
-		// copio id
-		while(ins[i] != ','){
-			id[i]=ins[i];
-			i++;
-		}
-		id[i]='\0';
-		// check sul nome, in caso passo al next row
-		i++;
-		ni = 0;
-		while(*found && ins[i] != ',' && name[ni] != '\0'){
-			if(ins[i]!=name[ni]){
-				*found = 0;
-			}
-			i++;
-			ni++;
-		}
-		// finisco entry per differenze date da secondi nomi
-		while(ins[i] != ','){
-			i++;
-		}
-		// check sul cognome, in caso passo al next row
-		i++;
-		si = 0;
-		while(*found && ins[i] != '\n' && surname[si] != '\0'){
-			if(ins[i]!=surname[si]){
-				*found = 0;
-			}
-			i++;
-			si++;
-		}
+int search_db_from_data(FILE* database, char* name, char* surname, int* is_in_database){
 
-		temp = atoi(id);
-		if(*found) 
-			return temp;
-		else if (unique < temp)
-			unique = temp;
+	/*
+	Format of database:
+	key,name,surname
+	
+	The field name in input and that of the database must be the exact same, for a match
+	*/
+
+	char instance[INSTANCE_LEN], key_string[KEY_LEN];
+	int instance_i, field_i;
+	int curr_key, new_key, found_entry;
+
+	new_key = 0;
+	found_entry = 0;
+	rewind(database);
+
+	while(fgets(instance, INSTANCE_LEN, database) && !found_entry){
+		
+		strcpy(key_string,strtok(instance,SEP));
+		curr_key = atoi(key_string);
+		if (new_key < curr_key)
+			new_key = curr_key;
+
+		if(strcmp(name, strtok(NULL,SEP)) == 0
+		&& strcmp(surname, strtok(NULL,SEP)) == 0)
+			found_entry = 1;
+
+		// here was snippet_1
 	}
-	return unique + 1;
+	
+	*is_in_database = found_entry;
+	if(found_entry) 
+		return curr_key;
+	return new_key + 1;
 }
+
+void print_from_key(FILE* database, int key){
+	char instance[INSTANCE_LEN];
+
+	rewind(database);
+	while(fgets(instance, INSTANCE_LEN, database)){
+		if(key == atoi(strtok(instance, SEP))){
+			printf("%s ", strtok(NULL, SEP));
+			printf("%s\n", strtok(NULL, SEP));
+			return;
+		}	
+	}	
+}
+
 int menu(){
 	int choice;
-	printf("Hello. There are 3 ways of accessing the data. You can\n1. Ask me about a specific mentor, and I will display their mentees\n2. Ask me about a specific mentee, and I will display their mentor\n3. Provide me a file and I will tell you whether any repetition with the past editions arises.\n0. Terminate program\n\nDigit the associated number and press enter to select...");
-	scanf("%d",&choice);
+	printf("\n\
+>> Hello. There are 3 ways of accessing the data. You can\n\
+  1. Ask me about a specific mentor, and I will display their mentees\n\
+  2. Ask me about a specific mentee, and I will display their mentor\n\
+  3. Provide me a file and I will tell you whether any repetition with the past editions arises.\n\
+  0. Terminate program\n\
+---\n\
+>> Digit the associated number and press enter to select..."); scanf("%d",&choice);
+	printf("\n");
 	return choice;
 }
-void gather_name(char* name, char* surname){
-	printf("\nYou want to find the mentees of a mentor. If you are not sure about how we memorized his name, do a quick ctrl+f search in the proper database, in this directory. Please provide the first name (LOWERCASE ONLY)..."); 
-	scanf("%s",name);
-	printf("\nAnd now the surname..."); 
-	scanf("%s",surname);	
+
+void request_anagraphic(char* name, char* surname){
+	printf("\
+>> You want to find the mentees of a mentor.\n\
+   If you are not sure about how we memorized his name,\n\
+   do a quick Ctrl+F search in the proper database (see documentation).\n\
+---\n\
+>> Please provide the first name (LOWERCASE ONLY)..."); scanf("%s", name);
+	printf(">> And now the surname (LOWERCASE ONLY)..."); scanf("%s", surname);
+	printf("\n");	
 }
-void print_mentees(FILE* pairs_db, FILE* mentee_db, int index){
-	int found, pair, year, exit;
-	char ins[IST_LEN], compare[IST_LEN];
+
+void print_mentees(FILE* pairs_db, FILE* mentee_db, int mentor_key){
+	int curr_mentee_key, year;
+	char instance[INSTANCE_LEN];
 
 	rewind(pairs_db);
-	while(fgets(ins,IST_LEN,pairs_db) != NULL){
-		// troviamo abbinamenti con questo mentor
-		if(atoi(strtok(ins,SEP)) == index){
-			// 1. salvo dati rimanenti
-			pair = atoi(strtok(NULL,SEP));
-			year = atoi(strtok(NULL,SEP));
-			// 2. inizio frase di return per questo abbinamento
-			printf("Year %4d - ",year);
-			// 3. ricerca del mentee associato
-			rewind(mentee_db);
-			exit = 0;
-			while(!exit && fgets(compare,IST_LEN,mentee_db) != NULL){
-				if(atoi(strtok(compare,SEP)) == pair){
-					exit = 1;
-					printf("%s ",strtok(NULL,SEP));
-					printf("%s\n",strtok(NULL,SEP));
-				}	
-			}
+	while(fgets(instance, INSTANCE_LEN, pairs_db)){
+		if(mentor_key == atoi(strtok(instance, SEP))){
+			curr_mentee_key = atoi(strtok(NULL, SEP));
+			year = atoi(strtok(NULL, SEP));
+			printf(" - Year: %4d, ");
+			print_from_key(mentee_db, curr_mentee_key);
 		}
-		// continuo la ricerca con prossimo pairing.
 	}
 }
-void print_mentors(FILE* pairs_db, FILE* mentor_db, int index){
-	int found, pair, year, exit;
-	char ins[IST_LEN], compare[IST_LEN];
+
+void print_mentors(FILE* pairs_db, FILE* mentor_db, int mentee_key){
+	int curr_mentor_key, year;
+	char instance[INSTANCE_LEN];
 
 	rewind(pairs_db);
-	while(fgets(ins,IST_LEN,pairs_db) != NULL){
-		// troviamo abbinamenti con questo mentor
-		pair = atoi(strtok(ins,SEP));
-		if(atoi(strtok(NULL,SEP)) == index){
-			// 1. salvo dati rimanenti
-			year = atoi(strtok(NULL,SEP));
-			// 2. inizio frase di return per questo abbinamento
-			printf("Year %4d - ",year);
-			// 3. ricerca del mentee associato
-			rewind(mentor_db);
-			exit = 0;
-			while(!exit && fgets(compare,IST_LEN,mentor_db) != NULL){
-				if(atoi(strtok(compare,SEP)) == pair){
-					exit = 1;
-					printf("%s ",strtok(NULL,SEP));
-					printf("%s\n",strtok(NULL,SEP));
-				}	
-			}
+	while(fgets(instance, INSTANCE_LEN, pairs_db)){
+		curr_mentor_key = atoi(strtok(instance, SEP));
+		if(mentee_key == atoi(strtok(NULL, SEP))){
+			year = atoi(strtok(NULL, SEP));
+			printf(" - Year: %4d, ");
+			print_from_key(mentor_db, curr_mentor_key);
 		}
-		// continuo la ricerca con prossimo pairing.
 	}
 }
-void find_ee_of_or(FILE* mentor_db, FILE* mentee_db, FILE* pairs_db){
-	int index, found;
-	char name[NAME_FIELDS],surname[NAME_FIELDS];
 
-	printf("\nYou want to find the mentees of a mentor.\n\n");
-	gather_name(name,surname);
-	index = search_db(mentor_db,name,surname,&found);
-	printf("\n---\n");
-	if(!found)
-		printf("This mentor does not seem to exist.");
-	else{
+void find_mentees_of_mentor(FILE* mentor_db, FILE* mentee_db, FILE* pairs_db){
+	int mentor_index, is_in_database;
+	char name[FIELDS_LEN],surname[FIELDS_LEN];
 
-		printf("Mentor N.%4d: %s %s. These are their mentees:\n",index,name,surname);
-		print_mentees(pairs_db,mentee_db,index);
+	printf(">> You want to find the mentees of a mentor.\n---\n");
+	request_anagraphic(name,surname);
+	mentor_index = search_db_from_data(mentor_db,name,surname,&is_in_database);
+	printf(">> You asked for mentor N.%4d: %s %s.\n",mentor_index,name,surname);
+	if(is_in_database){
+		printf(">> These are their mentees:\n");
+		print_mentees(pairs_db,mentee_db,mentor_index);
+	}else{
+		printf(">> This mentor does not seem to be registered.");
 	}
-	printf("---\n\n");
+	printf("---\n");
 }
-void find_or_of_ee(FILE* mentor_db, FILE* mentee_db, FILE* pairs_db){
-	int index, found;
-	char name[NAME_FIELDS],surname[NAME_FIELDS];
 
-	printf("\nYou want to find the mentors of a mentee.\n\n");
-	gather_name(name,surname);
-	index = search_db(mentee_db,name,surname,&found);
-	printf("\n---\n");
-	if(!found)
-		printf("This mentee does not seem to exist.");
-	else{
-		printf("Mentee N.%4d: %s %s. These are their mentors:\n",index,name,surname);
-		print_mentors(pairs_db,mentor_db,index);
+void find_mentors_of_mentee(FILE* mentor_db, FILE* mentee_db, FILE* pairs_db){
+	int mentee_index, is_in_database;
+	char name[FIELDS_LEN],surname[FIELDS_LEN];
+
+	printf(">> You want to find the mentors of a mentee.\n---\n");
+	request_anagraphic(name,surname);
+	mentee_index = search_db_from_data(mentee_db,name,surname,&is_in_database);
+	printf(">> You asked for mentee N.%4d: %s %s.\n",mentee_index,name,surname);
+	if(is_in_database){
+		printf(">> These are their mentors:\n");
+		print_mentors(pairs_db,mentor_db,mentee_index);
+	}else{
+		printf(">> This mentee does not seem to be registered.");
 	}
-	printf("---\n\n");
+	printf("---\n");
 }
+
 void print_check(FILE* mentor_db, FILE* mentee_db, FILE* pairs_db){
-	FILE *check;
-	char ist[IST_LEN];
-	char mentor_nm[NAME_FIELDS], mentor_snm[NAME_FIELDS], mentee_nm[NAME_FIELDS], mentee_snm[NAME_FIELDS];
-	int mentee_id, mentor_id, found;
+	FILE *check_db;
+	char instance[INSTANCE_LEN];
+	char mentor_name[FIELDS_LEN], mentor_surname[FIELDS_LEN], mentee_name[FIELDS_LEN], mentee_surname[FIELDS_LEN];
+	int mentee_key, mentor_key, is_in_database;
 
-	check = fopen(CHECK,"r");
+	check_db = fopen(CHECK_DB_FN,"r");
 	printf("\n---\n");
-	while(fgets(ist,IST_LEN,check) != NULL){
+	while(fgets(instance,INSTANCE_LEN,check_db) != NULL){
 		// dopo aver letto la riga, popola i parametri di lavoro
-		strcpy(mentor_nm, strtok(ist,SEP));
-		strcpy(mentor_snm, strtok(NULL,SEP));
-		strcpy(mentee_nm, strtok(NULL,SEP));
-		strcpy(mentee_snm, strtok(NULL,SEP));
+		strcpy(mentor_name, strtok(instance,SEP));
+		strcpy(mentor_surname, strtok(NULL,SEP));
+		strcpy(mentee_name, strtok(NULL,SEP));
+		strcpy(mentee_surname, strtok(NULL,SEP));
 
 		// controlla che entrambi, mentee e mentor, siano già presenti. Altrimenti almeno uno dei due è nuovo e puoi passare al prossimo controllo
-		mentee_id=search_db(mentee_db,mentee_nm,mentee_snm,&found);
-		if(!found) continue;
-		mentor_id=search_db(mentor_db,mentor_nm,mentor_snm,&found);
-		if(!found) continue;
+		mentee_key=search_db_from_data(mentee_db,mentee_name,mentee_surname,&is_in_database);
+		if(!is_in_database) continue;
+		mentor_key=search_db_from_data(mentor_db,mentor_name,mentor_surname,&is_in_database);
+		if(!is_in_database) continue;
 
 		// se esiste già stessa coppia, stampa messaggio di avviso e continua.
-		if(exists_pair(pairs_db,mentee_id,mentor_id)){
-			printf("ACHTUNG: SAME PAST PAIR FOUND!\n mentee: %s %s, mentor: %s %s\n",mentee_nm,mentee_snm,mentor_nm,mentor_snm);
+		if(exists_pair(pairs_db,mentee_key,mentor_key)){
+			printf("ACHTUNG: repetition found. mentee: %s %s, mentor: %s %s\n",
+				mentee_name,mentee_surname,mentor_name,mentor_surname);
 		}	
 	}
-	fclose(check);
+	fclose(check_db);
 	printf("\n---\n");
 }
+
+
+// snippet_1
+/*
+instance_i = 0;
+found_entry = 1;
+
+while(instance[instance_i] != ','){
+	key_string[instance_i] = instance[instance_i];
+	++instance_i;
+}
+key_string[instance_i] = '\0';
+++instance_i;
+
+field_i = 0;
+while(found_entry && instance[instance_i] != ',' && name[field_i] != '\0'){
+	if(instance[instance_i] != name[field_i]){
+		found_entry = 0;
+	}
+	++instance_i;
+	++field_i;
+}
+while(found_entry && instance[instance_i] != ',') 
+	++instance_i;
+++instance_i;
+
+field_i = 0;
+while(found_entry && instance[instance_i] != '\n' && surname[field_i] != '\0'){
+	if(instance[instance_i] != surname[field_i]){
+		found_entry = 0;
+	}
+	++instance_i;
+	++field_i;
+}
+*/
