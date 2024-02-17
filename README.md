@@ -23,26 +23,26 @@ At the end of the program, it is sufficient to create (with excel, or google she
 ### Display the mentors of a specific mentee / Display the mentees of a specific mentor
 Start running "bin/display.exe".
 
-![](misc/run_display.gif)
+![](assets/run_display.gif)
 
 Select the proper menu voice (1 for mentees of a mentor, 2 for mentors of a mentee), insert the name, then the surname of the person. The result will be displayed.
 
-![](misc/find_mentees.gif)
-![](misc/find_mentors.gif)
+![](assets/find_mentees.gif)
+![](assets/find_mentors.gif)
 
 Type 0 to terminate the program once you are done.
 
 ### Confront the proposal of current editions pairings with past pairings
 It is paramount that over the years we do not repeat the same pairing twice. In order to check this, export the csv file formatted as "nome_mentor,cognome_mentor,nome_mentee,cognome_mentee" and then replace the file check_db.csv with it. ACHTUNG: you need to add the header as first row of this new file.
 
-![](misc/calc_use.gif)
+![](assets/calc_use.gif)
 
 Then, run "bin/display.exe", selecting option 3. You may then either
 1. Not see an error warning (this is the desired output!)
-![](misc/use_case.gif)
+![](assets/use_case.gif)
 
 2. See an error warning (then, you **have** to change that pairing)
-![](misc/error_case.gif)
+![](assets/error_case.gif)
 
 ## On the code
 
