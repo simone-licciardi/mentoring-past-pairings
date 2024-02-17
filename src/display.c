@@ -62,6 +62,7 @@ int exists_pair(FILE* database, int mentee_key, int mentor_key){
 	char instance[INSTANCE_LEN];
 
 	rewind(database);
+	fgets(instance, INSTANCE_LEN, database); // header
 	while(fgets(instance, INSTANCE_LEN, database)){		
 		if(mentor_key == atoi(strtok(instance, SEP)) 
 		&& mentee_key == atoi(strtok(NULL, SEP)))
@@ -86,7 +87,7 @@ int search_db_from_data(FILE* database, char* name, char* surname, int* is_in_da
 	new_key = 0;
 	found_entry = 0;
 	rewind(database);
-
+	fgets(instance, INSTANCE_LEN, database); // header
 	while(fgets(instance, INSTANCE_LEN, database) && !found_entry){
 		
 		strcpy(key_string,strtok(instance,SEP));
@@ -111,6 +112,7 @@ void print_from_key(FILE* database, int key){
 	char instance[INSTANCE_LEN];
 
 	rewind(database);
+	fgets(instance, INSTANCE_LEN, database); // header
 	while(fgets(instance, INSTANCE_LEN, database)){
 		if(key == atoi(strtok(instance, SEP))){
 			printf("%s ", strtok(NULL, SEP));
@@ -136,13 +138,13 @@ int menu(){
 
 void request_anagraphic(char* name, char* surname){
 	printf("\
->> You want to find the mentees of a mentor.\n\
-   If you are not sure about how we memorized his name,\n\
+>> Provide their name. If you are not sure about how we memorized it,\n\
    do a quick Ctrl+F search in the proper database (see documentation).\n\
----\n\
->> Please provide the first name (LOWERCASE ONLY)..."); scanf("%s", name);
-	printf(">> And now the surname (LOWERCASE ONLY)..."); scanf("%s", surname);
-	printf("\n");	
+>> Please provide the first name (LOWERCASE ONLY)..."); 
+	scanf("%s", name);
+	printf(">> And now the surname (LOWERCASE ONLY)..."); 
+	scanf("%s", surname);
+	printf("\n---\n");	
 }
 
 void print_mentees(FILE* pairs_db, FILE* mentee_db, int mentor_key){
@@ -150,11 +152,12 @@ void print_mentees(FILE* pairs_db, FILE* mentee_db, int mentor_key){
 	char instance[INSTANCE_LEN];
 
 	rewind(pairs_db);
+	fgets(instance, INSTANCE_LEN, pairs_db); // header
 	while(fgets(instance, INSTANCE_LEN, pairs_db)){
 		if(mentor_key == atoi(strtok(instance, SEP))){
 			curr_mentee_key = atoi(strtok(NULL, SEP));
 			year = atoi(strtok(NULL, SEP));
-			printf(" - Year: %4d, ");
+			printf(" - Year: %4d, ", year);
 			print_from_key(mentee_db, curr_mentee_key);
 		}
 	}
@@ -165,11 +168,12 @@ void print_mentors(FILE* pairs_db, FILE* mentor_db, int mentee_key){
 	char instance[INSTANCE_LEN];
 
 	rewind(pairs_db);
+	fgets(instance, INSTANCE_LEN, pairs_db); // header
 	while(fgets(instance, INSTANCE_LEN, pairs_db)){
 		curr_mentor_key = atoi(strtok(instance, SEP));
 		if(mentee_key == atoi(strtok(NULL, SEP))){
 			year = atoi(strtok(NULL, SEP));
-			printf(" - Year: %4d, ");
+			printf(" - Year: %4d, ", year);
 			print_from_key(mentor_db, curr_mentor_key);
 		}
 	}
@@ -179,10 +183,10 @@ void find_mentees_of_mentor(FILE* mentor_db, FILE* mentee_db, FILE* pairs_db){
 	int mentor_index, is_in_database;
 	char name[FIELDS_LEN],surname[FIELDS_LEN];
 
-	printf(">> You want to find the mentees of a mentor.\n---\n");
+	printf(">> You want to find the mentees of a mentor.\n");
 	request_anagraphic(name,surname);
 	mentor_index = search_db_from_data(mentor_db,name,surname,&is_in_database);
-	printf(">> You asked for mentor N.%4d: %s %s.\n",mentor_index,name,surname);
+	printf(">> You asked for mentor N.%d: %s %s.\n",mentor_index,name,surname);
 	if(is_in_database){
 		printf(">> These are their mentees:\n");
 		print_mentees(pairs_db,mentee_db,mentor_index);
@@ -196,7 +200,7 @@ void find_mentors_of_mentee(FILE* mentor_db, FILE* mentee_db, FILE* pairs_db){
 	int mentee_index, is_in_database;
 	char name[FIELDS_LEN],surname[FIELDS_LEN];
 
-	printf(">> You want to find the mentors of a mentee.\n---\n");
+	printf(">> You want to find the mentors of a mentee.\n");
 	request_anagraphic(name,surname);
 	mentee_index = search_db_from_data(mentee_db,name,surname,&is_in_database);
 	printf(">> You asked for mentee N.%4d: %s %s.\n",mentee_index,name,surname);
@@ -217,6 +221,7 @@ void print_check(FILE* mentor_db, FILE* mentee_db, FILE* pairs_db){
 
 	check_db = fopen(CHECK_DB_FN,"r");
 	printf("\n---\n");
+	fgets(instance, INSTANCE_LEN, check_db); // header
 	while(fgets(instance,INSTANCE_LEN,check_db) != NULL){
 		// dopo aver letto la riga, popola i parametri di lavoro
 		strcpy(mentor_name, strtok(instance,SEP));

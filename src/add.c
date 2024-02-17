@@ -42,6 +42,9 @@ int main(){
 	legge il database new.csv riga per riga e popola gli altri tre (dove pairs viene sempre
 	popolato, mentre gli altri due vengono popolati solo se la entry è nuova).
 	*/
+
+	fgets(instance, INSTANCE_LEN, new_db); // header
+
 	while(fgets(instance, INSTANCE_LEN, new_db)){
 
 		// dopo aver letto la riga, popola i parametri di lavoro
@@ -52,10 +55,10 @@ int main(){
 		year = atoi(strtok(NULL, SEP));
 
 		// check & add su mentor_db
-		mentor_key = search_db(mentor_db, mentor_name, mentor_surname, &is_in_database);
+		mentor_key = search_db_from_data(mentor_db, mentor_name, mentor_surname, &is_in_database);
 		if(!is_in_database) add_person_entry(mentor_db, mentor_name, mentor_surname, mentor_key);
 		// check & add su mentee_db
-		mentee_key = search_db(mentee_db, mentee_name, mentee_surname, &is_in_database);
+		mentee_key = search_db_from_data(mentee_db, mentee_name, mentee_surname, &is_in_database);
 		if(!is_in_database) add_person_entry(mentee_db, mentee_name, mentee_surname, mentee_key);
 		// check & add su pairs_db
 		add_pair_entry(pairs_db, mentor_key, mentee_key, year);		
@@ -98,6 +101,8 @@ int search_db_from_data(FILE* database, char* name, char* surname, int* is_in_da
 	new_key = 0;
 	found_entry = 0;
 	rewind(database);
+
+	fgets(instance, INSTANCE_LEN, database); // header
 
 	while(fgets(instance, INSTANCE_LEN, database) && !found_entry){
 		
