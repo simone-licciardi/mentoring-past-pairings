@@ -11,14 +11,14 @@ It has been curated by Simone Licciardi (contacts: @SimoneTBIR, simone.licciardi
 
 ## How to use
 
-The tools allow the user to
-1. **Add the pairings from new editions to the database**. That is, at the end of each year program it allows to keep the database updated. The prodcedure consists in filling "new_db.csv" with the (properly formatted) new pairings and then execute "bin/add.exe".
-2. **Display the mentors of a specific mentee**, by executing "bin/display.exe" and selecting the proper voice in the menu.
-2. **Display the mentees of a specific mentor**, by executing "bin/display.exe" and selecting the proper voice in the menu.
-3. **Confront the proposal of current editions pairings with past pairings**, in order to avoid repetitions over the years. Again, this is a function of "bin/display.exe", with the caveat that you need to insert the (properly formatted) new pairings in the file "check_db.csv".
+The CLI allows the user to
+1. **Add the pairings from new editions to the database**, that is keep the database updated after each edition. The tool reads a CSV file containing the new pairs.
+2. **Display the mentors of a specific mentee**.
+2. **Display the mentees of a specific mentor**.
+3. **Confront the proposal of current editions pairings with past pairings**, in order to avoid repetitions over the years. The tool reads a CSV file containing the draft of new pairs.
 
 ### Add new pairings to the database
-At the end of the program, it is sufficient to create (with excel, or google sheet) a file formatted like "test/new_db.csv", and substitue it to "new_db.csv" (note: you should remove the empty file and then rename the new oen "new_db.csv". Pay attention to including the header!). Then, you should run "bin/add.exe". The databases will be updated with the new data.
+At the end of the program, it is sufficient to create (with excel, or google sheet) a file formatted like "test/new_db.csv", and substitue it to "new_db.csv" (note: you should remove the empty file and then rename the new one "new_db.csv". Pay attention to including the header!). Then, you should run "bin/add.exe". The databases will be updated with the new data.
 
 ### Display the mentors of a specific mentee / Display the mentees of a specific mentor
 Start running "bin/display.exe".
