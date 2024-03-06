@@ -2,7 +2,7 @@
 
 This repo contains CLI and tools to update, view, and confront AIM Mentoring past pairings with the new ones.
 
-It has been curated by Simone Licciardi (contacts: @SimoneTBIR, simone.licciardi@mail.polimi.it), for the project AIM Mentoring.
+It has been curated by Simone Licciardi (contacts: simone [dot] licciardi [at] outlook [dot] com), for the project AIM Mentoring.
 
 ### Legend:
 - [User manual](#how-to-use)
