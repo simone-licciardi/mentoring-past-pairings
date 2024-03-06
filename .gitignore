@@ -50,7 +50,5 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
-check_db.csv
-new_db.csv
 .test/
 .vscode/
